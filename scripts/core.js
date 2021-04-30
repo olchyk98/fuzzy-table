@@ -122,10 +122,10 @@ class FuzzyTable {
   * @param {object[]} data
   */
   init ({ target, data, columns, columnProperties }) {
-    this.target = target
+    this.target = this.initTable(target)
 
     this.headLabels = columns || getAllKeys(data)
-    this.columnEditors = columnProperties
+    this.columnEditors = this.loadEditors(columnProperties)
 
     // Arrow function is needed here,
     // because otherwise this context is losed.
@@ -135,6 +135,39 @@ class FuzzyTable {
     this.renderRows()
 
     this.subscribeToEvents()
+  }
+
+  /**{cw
+  * Initializes target table in
+  * the passed container.
+  *
+  * @param {HTMLDivElement} container
+  * @return {HTMLTableElement}
+  */
+  initTable (container) {
+    const table = document.createElement('table')
+
+    table.setAttribute('cellspacing', 0)
+    table.setAttribute('cellpadding', 0)
+
+    container.appendChild(table)
+    return table
+  }
+
+  /**
+  * Loads the passed set of editors
+  * which allows them to interact with the FuzzyTable instance.
+  *
+  * @param {object}
+  * @return {object[]}
+  */
+  loadEditors (editors) {
+    return R.reduce((acc, editor) => {
+      if(R.isNil(editor)) return
+
+      editor.onInit(this)
+      return R.append(editor, acc)
+    }, [], editors)
   }
 
   /**
@@ -164,17 +197,19 @@ class FuzzyTable {
   */
   renderHead () {
     // Create a new node that will be used as the head.
-    const head = document.createElement('tr')
+    const thead = document.createElement('thead')
+    const trhead = document.createElement('tr')
 
     // Iterate through all head keys and push them into the node.
     forEach((label) => {
       const key = document.createElement('th')
       key.textContent = label
-      head.appendChild(key)
+      trhead.appendChild(key)
     }, this.headLabels)
 
     // Push generated head to the targeted table.
-    this.target.appendChild(head)
+    thead.appendChild(trhead)
+    this.target.appendChild(thead)
   }
 
   /**
@@ -182,6 +217,8 @@ class FuzzyTable {
   * from the storage.
   */
   renderRows () {
+    const tbody = document.createElement('tbody')
+
     // Render rows
     forEachIndexed((rowData, posY) => {
       const row = document.createElement('tr')
@@ -199,8 +236,10 @@ class FuzzyTable {
         this.renderCell(cell, value)
       }, this.headLabels)
 
-      this.target.appendChild(row)
+      tbody.appendChild(row)
     }, this.data)
+
+    this.target.appendChild(tbody)
   }
 
   /**
@@ -220,7 +259,7 @@ class FuzzyTable {
     if (externalEditor) return externalEditor
 
     return {
-      render: (value, cell) => cell.textContent = value
+      render: (cell, value) => cell.textContent = value
     }
   }
 
@@ -286,9 +325,19 @@ class FuzzyTable {
   selectCellArea (cell) {
     this.clearSelection()
     const targetCells = []
+    
+    const [ x1, y1 ] = this.multiSelectingStart
+    const [ x2, y2 ] = this.getCellAxisPosition(cell)
 
-    const start = this.multiSelectingStart
-    const end = this.getCellAxisPosition(cell)
+    const start = [
+      Math.min(x1, x2),
+      Math.min(y1, y2),
+    ]
+
+    const end = [
+      Math.max(x1, x2),
+      Math.max(y1, y2),
+    ]
 
     for(let mx = start[0]; mx <= end[0]; ++mx) {
       for(let my = start[1]; my <= end[1]; ++my) {
@@ -398,7 +447,7 @@ class FuzzyTable {
     const columnKey = this.getCellDataPosition(cell)[1]
 
     cell.innerHTML = ''
-    this.getColumnEditor(columnKey).render(cellValue, cell)
+    this.getColumnEditor(columnKey).render(cell, cellValue)
   }
 
   /**

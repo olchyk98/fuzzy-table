@@ -4,17 +4,38 @@
   user-select:none;
 }
 
+.container {
+  width:100%;
+  height:100%;
+  overflow:auto;
+  position:fixed;
+  top:0;
+  left:0;
+}
+
+table {
+  width:100%;
+}
+
 th {
-  background:#edeef0;
-  border:1px solid grey;
-  border-bottom:0;
+  position:sticky;
+  top:0;
+  background:#e6e6e6;
+  border:1px solid #dedede;
   padding:5 10;
+  font-family:Arial;
+  font-weight:normal;
+  text-align:center;
+  text-transform:capitalize;
+  font-size:.95rem;
 }
 
 td {
-  border:1px solid grey;
+  border:1px solid #dedede;
   padding:3 5;
   cursor:default;
+  font-family:Arial;
+  font-weight:100;
 }
 
 td.selected {
@@ -24,13 +45,16 @@ td.selected {
   </style>
 </head>
 <body>
-  <table cellspacing="0" cellpadding="0"></table>
+  <div class="container"></div>
 
   <!--import depdendencies-->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ramda/0.25.0/ramda.min.js"></script>
 
   <!--import the library-->
   <script src="./scripts/core.js"></script>
+
+  <!--import custom editors-->
+  <script src="./scripts/FlagEditor.js"></script>
 
   <!--use the library-->
   <script src="./scripts/_using.js"></script>
